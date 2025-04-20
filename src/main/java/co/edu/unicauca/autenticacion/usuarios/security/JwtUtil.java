@@ -1,84 +1,87 @@
 package co.edu.unicauca.autenticacion.usuarios.security;
 
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.SignatureException;
-import io.jsonwebtoken.UnsupportedJwtException;
+import java.security.Key;
+import java.util.*;
 
 @Component
 public class JwtUtil {
-	private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
 
-	@Value("${app.jwtSecret}")
-	private String jwtSecret;
+    private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
 
-	@Value("${app.jwtExpirationMs}")
-	private int jwtExpirationMs;
+    @Value("${app.jwtSecret}")
+    private String jwtSecret;
 
-	public String generateJwtToken(String username) {
+    @Value("${app.jwtExpirationMs}")
+    private int jwtExpirationMs;
 
-		return Jwts.builder()
-				.setSubject((username))
-				.setIssuedAt(new Date())
-				.setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
-				.signWith(SignatureAlgorithm.HS512, jwtSecret)
-				.compact();
-	}
+    private Key getSigningKey() {
+        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
+    }
+    
+    public String generateJwtToken(String username, String rol) {
+        String token = Jwts.builder()
+                .setSubject(username)
+                .claim("rol", rol)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
+                .compact();
+        
+        return token;
+    }
+    
+    
 
-	public String getUserNameFromJwtToken(String token) {
-		return Jwts.parserBuilder()
-				   .setSigningKey(jwtSecret)
-				   .build()
-				   .parseClaimsJws(token)
-				   .getBody()
-				   .getSubject();
-	}
-	
-
-	// Método para obtener los roles del token JWT en el formato deseado y convertirlos a una colección de SimpleGrantedAuthority
-    public Collection<SimpleGrantedAuthority> getRolesFromJwtToken(String token) {
-        Claims claims = Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token).getBody();
-        Collection<Map<String, String>> roles = (Collection<Map<String, String>>) claims.get("roles");
-        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-        for (Map<String, String> role : roles) {
-            String roleName = role.get("authority");
-            authorities.add(new SimpleGrantedAuthority(roleName));
-        }
-        return authorities;
+    public String getUserNameFromJwtToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
     }
 
-	public boolean validateJwtToken(String authToken) {
-		try {
-			Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken);
-			return true;
-		} catch (SignatureException e) {
-			logger.error("Invalid JWT signature: {}", e.getMessage());
-		} catch (MalformedJwtException e) {
-			logger.error("Invalid JWT token: {}", e.getMessage());
-		} catch (ExpiredJwtException e) {
-			logger.error("JWT token is expired: {}", e.getMessage());
-		} catch (UnsupportedJwtException e) {
-			logger.error("JWT token is unsupported: {}", e.getMessage());
-		} catch (IllegalArgumentException e) {
-			logger.error("JWT claims string is empty: {}", e.getMessage());
-		}
+    public String getRolFromJwtToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("rol", String.class);
+    }
 
-		return false;
-	}
+    public Collection<SimpleGrantedAuthority> getRolesFromJwtToken(String token) {
+        String rol = getRolFromJwtToken(token);
+        return List.of(new SimpleGrantedAuthority("ROLE_" + rol));
+    }
+
+    public boolean validateJwtToken(String authToken) {
+        try {
+            Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(authToken);
+            return true;
+        } catch (SignatureException e) {
+            logger.error("🔐 Firma inválida: {}", e.getMessage());
+        } catch (MalformedJwtException e) {
+            logger.error("❌ Token mal formado: {}", e.getMessage());
+        } catch (ExpiredJwtException e) {
+            logger.error("⏰ Token expirado: {}", e.getMessage());
+        } catch (UnsupportedJwtException e) {
+            logger.error("🚫 Token no soportado: {}", e.getMessage());
+        } catch (IllegalArgumentException e) {
+            logger.error("⚠️ Token vacío: {}", e.getMessage());
+        }
+        return false;
+    }
 }

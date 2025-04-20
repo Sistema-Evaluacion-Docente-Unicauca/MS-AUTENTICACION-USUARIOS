@@ -34,7 +34,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
             "http://localhost:4200",  // frontend Angular local
-            "http://localhost:8080",  // backend u otro frontend
+            "http://localhost:8085",  // backend u otro frontend
             "http://127.0.0.1:8087",  // Postman o pruebas locales
             "https://oauthplayground.googleusercontent.com" // si usas el playground
         ));

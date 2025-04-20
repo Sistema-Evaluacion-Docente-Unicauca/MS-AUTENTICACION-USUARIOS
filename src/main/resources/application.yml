@@ -3,7 +3,7 @@ spring:
     name: usuarios
 
 server:
-  port: 8087
+  port: ${SERVER_PORT}
 
 logging:
   level:

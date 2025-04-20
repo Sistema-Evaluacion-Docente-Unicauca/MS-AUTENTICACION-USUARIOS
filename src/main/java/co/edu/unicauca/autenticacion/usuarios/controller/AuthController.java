@@ -36,36 +36,39 @@ public class AuthController {
 
         //KiraResponseDTO kiraUserInfo = kiraService.getUserInfo(email);
 
-        // Obtener información del usuario (provisional o real)
-        KiraResponseDTO kiraUserInfo = obtenerInfoProvisional(123L, "usuario123", 1, "CC", 
-            "123456789", "Perez", "Gomez", 
-            "Juan", "Carlos", email, 
-            "3001234567");
+        // Obtener información del usuario desde KIRA o provisional
+        KiraResponseDTO kiraUserInfo = obtenerInfoProvisional(
+                123L, "usuario123", 1, "CC",
+                "123456789", "Perez", "Gomez",
+                "Juan", "Carlos", email,
+                "3001234567");
 
-        // Generar JWT interno
-        String jwtTokenBearer = jwtUtil.generateJwtToken(nombreUsuario);
+        // 💡 Establecer el rol. Puede venir de kiraUserInfo en un futuro.
+        String rol = "ESTUDIANTE";
 
+        // ✅ Generar token
+        String jwtTokenBearer = jwtUtil.generateJwtToken(nombreUsuario, rol);
+
+        // Puedes seguir generando un token adicional si es necesario
         String jwtToken = jwtTokenService.generateToken(
-            UUID.randomUUID().toString(),
-            kiraUserInfo,
-            jwtTokenBearer,
-            nombreUsuario
-        );
-
+                UUID.randomUUID().toString(),
+                kiraUserInfo,
+                jwtTokenBearer,
+                nombreUsuario);
         return ResponseEntity.ok(new JwtResponse(jwtToken));
     }
 
-    private KiraResponseDTO obtenerInfoProvisional(Long oidTercero, String usuario, Integer oidTipoIdentificacion, 
-                String tipoIdentificacion, String identificacion, 
-                String primerApellido, String segundoApellido, 
-                String primerNombre, String segundoNombre, 
-                String correo, String celular) {
-        
+    private KiraResponseDTO obtenerInfoProvisional(Long oidTercero, String usuario, Integer oidTipoIdentificacion,
+            String tipoIdentificacion, String identificacion,
+            String primerApellido, String segundoApellido,
+            String primerNombre, String segundoNombre,
+            String correo, String celular) {
+
         List<DataAdicionalKira> lista = new ArrayList<>();
         lista.add(new DataAdicionalKira("Estudiante", "38", "12345678", "Ingeniería de Sistemas", "ACTIVO"));
 
         return new KiraResponseDTO(oidTercero, usuario, oidTipoIdentificacion, tipoIdentificacion,
-            identificacion, primerApellido, segundoApellido, primerNombre,
-            segundoNombre, correo, celular, lista);
+                identificacion, primerApellido, segundoApellido, primerNombre,
+                segundoNombre, correo, celular, lista);
     }
 }
