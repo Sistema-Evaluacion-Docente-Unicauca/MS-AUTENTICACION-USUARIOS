@@ -20,19 +20,29 @@ public class AuthController {
 
 	@PostMapping("/google")
 	public ResponseEntity<ApiResponse<JwtResponse>> authenticateWithGoogle(
-		@RequestBody GoogleTokenRequest googleTokenRequest) {
-
-		GoogleIdToken.Payload payload = googleAuthService.verifyGoogleIdToken(googleTokenRequest.getToken());
-
-		String email = payload.getEmail();
-		String nombreUsuario = email.split("@")[0];
-
-		String jwtTokenBearer = jwtUtil.generateJwtToken(email, nombreUsuario);
-
-		JwtResponse jwtResponse = new JwtResponse(jwtTokenBearer);
-
-		ApiResponse<JwtResponse> apiResponse = new ApiResponse<>(200, "Inicio de sesión exitoso", jwtResponse);
-
-		return ResponseEntity.ok(apiResponse);
-	}
+			@RequestBody GoogleTokenRequest googleTokenRequest) {
+	
+		try {
+			GoogleIdToken.Payload payload = googleAuthService.verifyGoogleIdToken(googleTokenRequest.getToken());
+	
+			if (payload == null) {
+				return ResponseEntity.badRequest().body(new ApiResponse<>(400, "Token de Google inválido", null));
+			}
+	
+			String email = payload.getEmail();
+			String nombreUsuario = email.split("@")[0];
+	
+			String jwtTokenBearer = jwtUtil.generateJwtToken(email, nombreUsuario);
+	
+			JwtResponse jwtResponse = new JwtResponse(jwtTokenBearer);
+			ApiResponse<JwtResponse> apiResponse = new ApiResponse<>(200, "Inicio de sesión exitoso", jwtResponse);
+	
+			return ResponseEntity.ok(apiResponse);
+	
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(500).body(new ApiResponse<>(500, "Error procesando la autenticación: " + e.getMessage(), null)
+			);
+		}
+	}	
 }
