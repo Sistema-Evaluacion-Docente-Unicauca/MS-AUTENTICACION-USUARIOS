@@ -26,5 +26,4 @@ public class KiraServiceImpl implements KiraService {
         ResponseEntity<KiraResponseDTO> response = restTemplate.exchange(url, HttpMethod.GET, null, KiraResponseDTO.class);
         return response.getBody();
     }
-    
 }
