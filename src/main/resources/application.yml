@@ -1,9 +1,12 @@
 spring:
   application:
     name: usuarios
-
+  jackson:
+    time-zone: America/Bogota
 server:
   port: ${SERVER_PORT}
+  servlet:
+    context-path: /usuarios
 
 logging:
   level:

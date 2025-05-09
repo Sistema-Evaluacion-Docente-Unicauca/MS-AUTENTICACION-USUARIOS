@@ -33,10 +33,10 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
-            "http://localhost:4200",  // frontend Angular local
-            "http://localhost:8085",  // backend u otro frontend
-            "http://127.0.0.1:8087",  // Postman o pruebas locales
-            "https://oauthplayground.googleusercontent.com" // si usas el playground
+            "http://localhost:4200",
+            "http://localhost:8085",
+            "http://127.0.0.1:8087",
+            "https://kubetest.unicauca.edu.co"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
